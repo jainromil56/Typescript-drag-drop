@@ -1,4 +1,25 @@
-// Code goes here!
+//autobind decorator
+function autobind(
+  target: any,
+  methodName: string,
+  descriptor: PropertyDescriptor
+) {
+  //stores method defined
+  const originalMethod = descriptor.value;
+
+  const adjDescriptor: PropertyDescriptor = {
+    configurable: true, //set to true, so we can change it later
+    get() {
+      /* we use bind(this) so this keyword in submitHandler will refer
+    to this same as used in configure method */
+      const boundFn = originalMethod.bind(this);
+      return boundFn;
+    },
+  };
+  return adjDescriptor;
+}
+
+//ProjectInput class
 class ProjectInput {
   templateElement: HTMLTemplateElement;
   hostElement: HTMLElement; //if not sure assign type HTMLElement
@@ -40,16 +61,15 @@ class ProjectInput {
     this.attach();
   }
 
+  @autobind
   private submitHandler(event: Event) {
     event.preventDefault();
     console.log(this.titleInputElement.value);
   }
 
   private configure() {
-    /*when form submitted, submitHandler gets triggered
-    we use bind(this) so this keyword in submitHandler will refer
-    to this same as used in configure method*/
-    this.element.addEventListener("submit", this.submitHandler.bind(this));
+    /*when form submitted, submitHandler gets triggered*/
+    this.element.addEventListener("submit", this.submitHandler);
   }
 
   //private becoz we won't be accessing it outside of class only inside
