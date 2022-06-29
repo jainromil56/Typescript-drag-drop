@@ -10,8 +10,6 @@ function autobind(
   const adjDescriptor: PropertyDescriptor = {
     configurable: true, //set to true, so we can change it later
     get() {
-      /* we use bind(this) so this keyword in submitHandler will refer
-    to this same as used in configure method */
       const boundFn = originalMethod.bind(this);
       return boundFn;
     },
@@ -61,14 +59,47 @@ class ProjectInput {
     this.attach();
   }
 
+  //gets user input from input fields
+  private gatherUserInput(): [string, string, number] | void {
+    const enteredTitle = this.titleInputElement.value;
+    const enteredDescription = this.descriptionInputElement.value;
+    const enteredPeople = this.peopleInputElement.value;
+
+    if (
+      enteredTitle.trim().length === 0 ||
+      enteredDescription.trim().length === 0 ||
+      enteredPeople.trim().length === 0
+    ) {
+      alert('Invalid input, please try again!');
+      return;
+    }else{
+      // + sign will convert it to number
+      return [enteredTitle, enteredDescription, +enteredPeople];
+    }
+  }
+
+  private clearInput() {
+    this.titleInputElement.value = '';
+    this.descriptionInputElement.value = '';
+    this.peopleInputElement.value = '';
+  }
+
   @autobind
   private submitHandler(event: Event) {
     event.preventDefault();
-    console.log(this.titleInputElement.value);
+    // console.log(this.titleInputElement.value);
+    const userInput = this.gatherUserInput();
+    if(Array.isArray(userInput)){
+      const [title, desc, people] = userInput;
+      console.log(title, desc, people);
+      this.clearInput();
+    }
   }
 
   private configure() {
-    /*when form submitted, submitHandler gets triggered*/
+    /*when form submitted, submitHandler gets triggered
+    we use bind(this) so this keyword in submitHandler will refer
+    to this same as used in configure method*/
     this.element.addEventListener("submit", this.submitHandler);
   }
 
