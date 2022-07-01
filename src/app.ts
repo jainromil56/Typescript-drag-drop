@@ -1,3 +1,48 @@
+// Porject State Management - something like useState in react
+class PorjectState {
+  //listeners will be called whenever something is changed
+  private listeners: any[] = [];
+  private projects: any[] = [];
+  private static instance: PorjectState;
+
+  // singleton, run only one instance of it
+  private constructor(){
+
+  }
+
+  static getInstance(){
+    if(this.instance){ //if their is already one instance return it
+      return this.instance;
+    }
+    this.instance = new PorjectState();
+    return this.instance;
+  }
+  //end singleton
+
+  addListener(listenerFn: Function){
+    this.listeners.push(listenerFn);
+  }
+
+  addProject(title: string, description: string, numOfPeople: number){
+    const newProject = {
+      id: Math.random().toString(),
+      title: title,
+      description: description,
+      people: numOfPeople
+    };
+    this.projects.push(newProject);
+    for(const listenerFn of this.listeners){
+      //pass copy of array using slice
+      listenerFn(this.projects.slice());
+    }
+  }
+}
+
+/* global constant we can use this in whole project
+we will have only one object in entire application that we will work with, 
+because of singleton */
+const projectState = PorjectState.getInstance();
+
 //validation
 interface Validatable {
   value: string | number;
@@ -74,6 +119,7 @@ class ProjectList {
   templateElement: HTMLTemplateElement;
   hostElement: HTMLDivElement; //if not sure assign type HTMLElement
   element: HTMLElement;
+  assignedProjects: any[];
 
   //literal type in constructor
   constructor(private type: 'active' | 'finished') {
@@ -82,6 +128,7 @@ class ProjectList {
       "project-list"
     )! as HTMLTemplateElement; //! - for sure it is their
     this.hostElement = document.getElementById("app")! as HTMLDivElement;
+    this.assignedProjects = [];
 
     // imports HTML content, pass true  for deep cloning of nested elements from html
     const importedNode = document.importNode(
@@ -92,8 +139,27 @@ class ProjectList {
     this.element = importedNode.firstElementChild as HTMLElement;
     // add css  id to element
     this.element.id = `${this.type}-projects`;
+    
+    /* It will get list of projects, will get called only
+    when new projects are added */
+    projectState.addListener((projects: any[]) => {
+      // override assigned projects with new one
+      this.assignedProjects = projects;
+      this.renderProjects();
+    });
+
     this.attach();
     this.renderContent();
+  }
+
+  // renders new projects
+  private renderProjects(){
+    const listEl = document.getElementById(`${this.type}-projects-list`)! as HTMLUListElement;
+    for (let prjItem of this.assignedProjects) {
+      const listItem = document.createElement('li');
+      listItem.textContent = prjItem.title;
+      listEl.appendChild(listItem);
+    }
   }
 
   private renderContent () {
@@ -198,6 +264,7 @@ class ProjectInput {
     const userInput = this.gatherUserInput();
     if (Array.isArray(userInput)) {
       const [title, desc, people] = userInput;
+      projectState.addProject(title, desc, people);
       console.log(title, desc, people);
       this.clearInput();
     }
