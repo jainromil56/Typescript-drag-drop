@@ -159,8 +159,14 @@ class ProjectList {
     /* It will get list of projects, will get called only
     when new projects are added */
     projectState.addListener((projects: Project[]) => {
+      const relevantProjects = projects.filter(prj => {
+        if(this.type === 'active'){
+          return prj.status === ProjectStatus.Active;
+        }
+        return prj.status === ProjectStatus.Finished;
+      })
       // override assigned projects with new one
-      this.assignedProjects = projects;
+      this.assignedProjects = relevantProjects;
       this.renderProjects();
     });
 
@@ -173,6 +179,8 @@ class ProjectList {
     const listEl = document.getElementById(
       `${this.type}-projects-list`
     )! as HTMLUListElement;
+
+    listEl.innerHTML = ''; //get rid of all items and rerender list, to avoid duplicates
     for (let prjItem of this.assignedProjects) {
       const listItem = document.createElement("li");
       listItem.textContent = prjItem.title;
