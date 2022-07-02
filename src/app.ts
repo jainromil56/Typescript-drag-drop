@@ -1,17 +1,34 @@
+// Project Type
+enum ProjectStatus {
+  Active,
+  Finished,
+}
+
+class Project {
+  constructor(
+    public id: string,
+    public title: string,
+    public description: string,
+    public people: number,
+    public status: ProjectStatus
+  ) {}
+}
+
+type Listener = (items: Project[]) => void;
+
 // Porject State Management - something like useState in react
 class PorjectState {
   //listeners will be called whenever something is changed
-  private listeners: any[] = [];
-  private projects: any[] = [];
+  private listeners: Listener[] = [];
+  private projects: Project[] = [];
   private static instance: PorjectState;
 
   // singleton, run only one instance of it
-  private constructor(){
+  private constructor() {}
 
-  }
-
-  static getInstance(){
-    if(this.instance){ //if their is already one instance return it
+  static getInstance() {
+    if (this.instance) {
+      //if their is already one instance return it
       return this.instance;
     }
     this.instance = new PorjectState();
@@ -19,19 +36,20 @@ class PorjectState {
   }
   //end singleton
 
-  addListener(listenerFn: Function){
+  addListener(listenerFn: Listener) {
     this.listeners.push(listenerFn);
   }
 
-  addProject(title: string, description: string, numOfPeople: number){
-    const newProject = {
-      id: Math.random().toString(),
-      title: title,
-      description: description,
-      people: numOfPeople
-    };
+  addProject(title: string, description: string, numOfPeople: number) {
+    const newProject = new Project(
+      Math.random().toString(),
+      title,
+      description,
+      numOfPeople,
+      ProjectStatus.Active //whenever create new project, assign with active    
+    );
     this.projects.push(newProject);
-    for(const listenerFn of this.listeners){
+    for (const listenerFn of this.listeners) {
       //pass copy of array using slice
       listenerFn(this.projects.slice());
     }
@@ -113,17 +131,15 @@ function autobind(
   return adjDescriptor;
 }
 
-
 // ProjectList Class
 class ProjectList {
   templateElement: HTMLTemplateElement;
   hostElement: HTMLDivElement; //if not sure assign type HTMLElement
   element: HTMLElement;
-  assignedProjects: any[];
+  assignedProjects: Project[];
 
   //literal type in constructor
-  constructor(private type: 'active' | 'finished') {
-    
+  constructor(private type: "active" | "finished") {
     this.templateElement = document.getElementById(
       "project-list"
     )! as HTMLTemplateElement; //! - for sure it is their
@@ -139,10 +155,10 @@ class ProjectList {
     this.element = importedNode.firstElementChild as HTMLElement;
     // add css  id to element
     this.element.id = `${this.type}-projects`;
-    
+
     /* It will get list of projects, will get called only
     when new projects are added */
-    projectState.addListener((projects: any[]) => {
+    projectState.addListener((projects: Project[]) => {
       // override assigned projects with new one
       this.assignedProjects = projects;
       this.renderProjects();
@@ -153,25 +169,27 @@ class ProjectList {
   }
 
   // renders new projects
-  private renderProjects(){
-    const listEl = document.getElementById(`${this.type}-projects-list`)! as HTMLUListElement;
+  private renderProjects() {
+    const listEl = document.getElementById(
+      `${this.type}-projects-list`
+    )! as HTMLUListElement;
     for (let prjItem of this.assignedProjects) {
-      const listItem = document.createElement('li');
+      const listItem = document.createElement("li");
       listItem.textContent = prjItem.title;
       listEl.appendChild(listItem);
     }
   }
 
-  private renderContent () {
+  private renderContent() {
     const listId = `${this.type}-projects-list`;
-    this.element.querySelector('ul')!.id = listId;
-    this.element.querySelector('h2')!.textContent = this.type.toUpperCase() + ' PROJECTS';
+    this.element.querySelector("ul")!.id = listId;
+    this.element.querySelector("h2")!.textContent =
+      this.type.toUpperCase() + " PROJECTS";
   }
 
   private attach() {
-    this.hostElement.insertAdjacentElement('beforeend', this.element);
+    this.hostElement.insertAdjacentElement("beforeend", this.element);
   }
-
 }
 
 //ProjectInput class
@@ -285,5 +303,5 @@ class ProjectInput {
 }
 
 const prjInput = new ProjectInput();
-const activerPrjList = new ProjectList('active');
-const finishedPrjList = new ProjectList('finished');
+const activerPrjList = new ProjectList("active");
+const finishedPrjList = new ProjectList("finished");
