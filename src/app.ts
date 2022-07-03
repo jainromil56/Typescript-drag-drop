@@ -68,6 +68,20 @@ class PorjectState extends State<Project> {
       ProjectStatus.Active //whenever create new project, assign with active
     );
     this.projects.push(newProject);
+    this.updateListeners(); // updates listener list of projects
+  }
+
+  // dropping project after moving
+  moveProject(projectId: string, newStatus: ProjectStatus) {
+    // finds project in array and returns
+    const project = this.projects.find((prj) => prj.id === projectId);
+    if (project && project.status !== newStatus) {
+      project.status = newStatus; // set status to know whether dragged or not
+      this.updateListeners();
+    }
+  }
+
+  private updateListeners() {
     for (const listenerFn of this.listeners) {
       //pass copy of array using slice
       listenerFn(this.projects.slice());
@@ -219,7 +233,11 @@ class ProjectItem
 
   @autobind
   dragStartHandler(event: DragEvent) {
-    console.log(event);
+    // console.log(event);
+    /* dataTransfer - we can use it to transfer data, and then
+     extract where we want to transfer */
+    event.dataTransfer!.setData("text/plain", this.project.id); // datat type test/plain
+    event.dataTransfer!.effectAllowed = "move"; // for cursor while drag
   }
 
   dragEndHandler(event: DragEvent) {
@@ -256,11 +274,20 @@ class ProjectList
 
   @autobind
   dragOverHandler(event: DragEvent) {
-    const listEl = this.element.querySelector("ul")!;
-    listEl.classList.add("droppable");
+    if (event.dataTransfer && event.dataTransfer.types[0] === "text/plain") {
+      event.preventDefault();
+      const listEl = this.element.querySelector("ul")!;
+      listEl.classList.add("droppable");
+    }
   }
 
+  @autobind
   dropHandler(event: DragEvent) {
+    const prjId = event.dataTransfer!.getData("text/plain"); // gets Data
+    projectState.moveProject(
+      prjId,
+      this.type === "active" ? ProjectStatus.Active : ProjectStatus.Finished
+    );
   }
 
   @autobind
