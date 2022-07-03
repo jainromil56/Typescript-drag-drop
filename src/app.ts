@@ -17,7 +17,7 @@ class Project {
 type Listener<T> = (items: T[]) => void;
 
 // generic type class
-class State<T> {
+class State<T>{
   //listeners will be called whenever something is changed
   protected listeners: Listener<T>[] = [];
 
@@ -27,7 +27,7 @@ class State<T> {
 }
 
 // Porject State Management - something like useState in react
-class PorjectState extends State<Project> {
+class PorjectState extends State<Project>{
   private projects: Project[] = [];
   private static instance: PorjectState;
 
@@ -45,6 +45,7 @@ class PorjectState extends State<Project> {
     return this.instance;
   }
   //end singleton
+
 
   addProject(title: string, description: string, numOfPeople: number) {
     const newProject = new Project(
@@ -176,16 +177,38 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
   }
 
   abstract configure(): void;
-  abstract renderContent(): void;
+  abstract renderContent(): void; 
+}
+
+// ProjectItem Class
+class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
+  private project: Project;
+
+  constructor(hostId: string, project: Project) {
+    // it will forward properties to base class Component
+    super('single-project', hostId, false, project.id);
+    this.project = project;
+
+    this.configure();
+    this.renderContent();
+  }
+
+  configure() {};
+
+  renderContent() {
+    this.element.querySelector('h2')!.textContent = this.project.title;
+    this.element.querySelector('h3')!.textContent = this.project.people.toString();
+    this.element.querySelector('p')!.textContent = this.project.description;
+  }; 
 }
 
 // ProjectList Class
-class ProjectList extends Component<HTMLDivElement, HTMLElement> {
+class ProjectList extends Component<HTMLDivElement, HTMLElement>{
   assignedProjects: Project[];
 
   //literal type in constructor
   constructor(private type: "active" | "finished") {
-    super("project-list", "app", false, `${type}-projects`);
+    super('project-list', 'app', false,`${type}-projects`);
     this.assignedProjects = [];
 
     this.configure();
@@ -223,22 +246,21 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
 
     listEl.innerHTML = ""; //get rid of all items and rerender list, to avoid duplicates
     for (let prjItem of this.assignedProjects) {
-      const listItem = document.createElement("li");
-      listItem.textContent = prjItem.title;
-      listEl.appendChild(listItem);
+      new ProjectItem(this.element.querySelector('ul')!.id, prjItem);
     }
   }
+
 }
 
 //ProjectInput class
-class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
+class ProjectInput extends Component<HTMLDivElement, HTMLFormElement>{
   //input fields
   titleInputElement: HTMLInputElement;
   descriptionInputElement: HTMLInputElement;
   peopleInputElement: HTMLInputElement;
 
   constructor() {
-    super("project-input", "app", true, "user-input");
+    super('project-input', 'app', true, 'user-input' );
     //select input fields using id
     this.titleInputElement = this.element.querySelector(
       "#title"
@@ -259,7 +281,7 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
     this.element.addEventListener("submit", this.submitHandler);
   }
 
-  renderContent() {}
+  renderContent(){}
 
   //gets user input from input fields
   private gatherUserInput(): [string, string, number] | void {
@@ -314,6 +336,8 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
       this.clearInput();
     }
   }
+
+
 }
 
 const prjInput = new ProjectInput();
